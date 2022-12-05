@@ -1,9 +1,74 @@
+import math
+import numpy as np
+import pandas as pd
 from PIL import Image
+
 from pathlib import Path
 from functools import cache
-import numpy as np
+from typing import List
+from sklearn.preprocessing import MinMaxScaler
+
+def img2gif(images:List[Image.Image], gif:Path) -> None:
+    # Create a gif from the images
+    assert(len(images) > 1), "More images required to make gif"
+    images[0].save(gif, save_all=True, append_images=[img for img in images[1:]])
+
+def img2dir(images: List[Image.Image], save_dir:Path) -> None:
+    # Saves all images to provided dir
+    save_dir.unlink() if save_dir.exists() else save_dir.mkdir()
+    for idx, image in enumerate(images):
+        image.save(save_dir/f'{idx}.png')
+
+class Df2ImageNormalizer:
+    scaler = MinMaxScaler(feature_range=(0, 255))
+    @staticmethod
+    def normalize(df:pd.DataFrame) -> pd.DataFrame:
+        """ Normalize the df column wise to for images """
+        return pd.DataFrame(Df2ImageNormalizer.scaler.fit_transform(df[df.columns]), columns=df.columns).astype(int)
+
+class df2array:
+    """ Class to covert df into an ndarray where all rows are converted to 2D square array with paddings if required
+        The output from this class can be directly used to covert to images """
+    scaler = MinMaxScaler(feature_range=(0, 255))
+    @staticmethod
+    def required_zero(arr:np.ndarray) -> int:
+        """ Function to compute how many zeros need to be appended to make no .of col square """
+        assert(len(arr.shape) == 2), "Wrong shape, make sure that the input here is comming from Dataframe.to_numpy"
+        length = arr.shape[1]
+        sq = math.ceil(math.sqrt(length))
+        return sq*sq - length
+    
+    @staticmethod
+    def add_pad(arr: np.ndarray, pad:int) -> np.ndarray:
+        """ Add 0-padding to columns axis. Adds additional pads """
+        assert(len(arr.shape) == 2), "Wrong shape, make sure that the input here is comming from Dataframe.to_numpy"
+        pad_col = pad
+        pad_row = 0
+        return np.pad(arr, [(0, pad_row), (0, pad_col)]) 
+
+    @staticmethod
+    def squareify(arr: np.ndarray) -> np.ndarray:
+        """ Returns all the rows in the array reshaped as squares """
+        nrows, ncols =  arr.shape
+        sqrt_dim = int(math.sqrt(ncols))
+        assert(sqrt_dim**2 ==  ncols), "The arrays on the row axis is not a perfect square."
+        new_dim = (nrows, sqrt_dim, sqrt_dim)
+        return arr.reshape(new_dim)
+    
+    @staticmethod
+    def normalize(df:pd.DataFrame) -> pd.DataFrame:
+        """ Normalize the df column wise to for images """
+        return pd.DataFrame(Df2ImageNormalizer.scaler.fit_transform(df[df.columns].astype(float)), columns=df.columns)
+
+    @staticmethod
+    def convert(df: pd.DataFrame) -> np.ndarray:
+        """ Main function to convert df to nd.array where each individual array is a square arrray
+            ready to be converted to image """
+        arr = df2array.normalize(df).to_numpy().astype(np.uint8)
+        return df2array.squareify(df2array.add_pad(arr, pad=df2array.required_zero(arr)))
 
 class array2img:
+    #TODO: Not required anymore!
     def __init__(self, data:np.ndarray) -> None:
         # Manage 2D arrays with capabilities to display
         assert(len(data.shape) == 2), "data shape must be 2D"
@@ -20,27 +85,16 @@ class array2img:
         self._get_Image().save(png)
 
 
+class Df2BW:
+    """ Class to convert df to BW images """
+    @staticmethod
+    def convert(df:pd.DataFrame) -> List[Image.Image]:
+        arrs = df2array.convert(df)
+        return [Image.fromarray(arr, mode = 'L') for arr in arrs]
 
-# s = 512
-# w, h = s, s
-
-# ones = np.ones(shape=(w,h), dtype=np.uint8) * 255
-# zeros = np.zeros(shape=(w,h), dtype=np.uint8)
-
-# red = np.random.randint(low=0, high=255, size=(w,h), dtype=np.uint8)
-# green = np.random.randint(low=0, high=255, size=(w,h), dtype=np.uint8)
-# blue = np.random.randint(low=0, high=255, size=(w,h), dtype=np.uint8)
-# data = np.stack((red,green, blue), axis=2)
-
-# # data = np.stack((ones, ones, ones), axis=2)
-# print(data.shape)
-# img = Image.fromarray(data, 'RGB')
-# img.save('my.png')
-# img.show()
-
-# # Draw with b/w data
-# bw_data = np.random.randint(low=0, high=255, size=(w, h), dtype=np.uint8)
-# print(bw_data.shape)
-# print(len(bw_data.shape))
-# img = Image.fromarray(bw_data, 'L')
-# img.show()
+class Df2RGB:
+    """ Class to convert df to BW images """
+    @staticmethod
+    def convert(df:pd.DataFrame) -> List[Image.Image]:
+        arrs = df2array.convert(df)
+        return [Image.fromarray(np.dstack((arrs[idx], arrs[idx-1], arrs[idx-2])), mode = 'RGB') for idx in range(2,arrs.shape[0])]

@@ -1,9 +1,31 @@
 import numpy as np
 import pandas as pd
-from talib import abstract, get_function_groups
+from talib import abstract, get_function_groups, __version__
 from functools import cache
 from collections import OrderedDict
 from typing import List, Dict
+
+@cache
+def get_valid_talib_functions() -> List[str]:
+    """ Helper function to return all the valid functions from talib """
+    assert(__version__ == '0.4.24'), "Talib version not the same!"
+    # TODO: Make this into a configuration
+    VALID_GROUPS = [
+        'Overlap Studies', 'Momentum Indicators', 'Pattern Recognition', 
+        'Price Transform', 'Volatility Indicators', 'Volume Indicators',
+        'Cycle Indicators', 'Math Operators', 'Math Transform', 'Statistic Functions'
+    ]
+    IGNORE_INDICATORS = ['MAVP', 'T3', 'HT_TRENDLINE', 'ACOS', 'ASIN', 'COSH', 'EXP', 'SINH']
+    valid_funcs = []
+    for group, funcs in get_function_groups().items():
+        if group not in VALID_GROUPS:
+            continue
+        for func in funcs:
+            if func in IGNORE_INDICATORS:
+                continue
+            valid_funcs.append(func)
+    return valid_funcs
+
 
 class Talib_func:
     """ Class to maintian the abstract api for talib  """
@@ -52,28 +74,6 @@ class Talib_func:
         # Returns a list of paramters names
         return list(self.parameters.keys())
 
-@cache
-def get_valid_talib_functions() -> List[str]:
-    """ Helper function to return all the valid functions from talib """
-    # TODO: Make this into a configuration
-    VALID_GROUPS = [
-        'Momentum Indicators', 'Overlap Studies', 'Pattern Recognition', 
-        'Price Transform', 'Volatility Indicators', 'Volume Indicators',
-        'Cycle Indicators', 'Math Operators', 'Math Transform', 'Statistic Functions'
-    ]
-    IGNORE_INDICATORS = ['MAVP', 'T3', 'HT_TRENDLINE', 'ACOS', 'ASIN']
-    valid_funcs = []
-    for group, funcs in get_function_groups().items():
-        if group not in VALID_GROUPS:
-            print(group)
-            continue
-        for func in funcs:
-            if func in IGNORE_INDICATORS:
-                continue
-            valid_funcs.append(func)
-    return valid_funcs
-
-
 class CumputeTALibIndicators:
     """ Use this class to compute all indicator known to TALib """
     def __init__(self, timeperiods:List[int]) -> None:
@@ -117,11 +117,12 @@ class CumputeTALibIndicators:
                         output_cols.append(f'{col}{tp}')
             else:
                 output_cols = output_cols + tafunc.output_names
-        return output_cols
+        return sorted(output_cols)
         
     # Appends indicator data to current df
     def get_indicators_df(self, df: pd.DataFrame, dropNaNs = True) -> pd.DataFrame:
-        """ Returns a new df with only the indicator data concatenated with original df """
+        """ Returns a new df with the indicator data concatenated with original df.
+            The returned df has columns sorted """
         cols = {'Open', 'Close', 'High', 'Low', 'Volume'}
         # Check for sanity of the df
         assert(cols.issubset(set(df.columns))), "Required columns missing in df"
@@ -133,4 +134,4 @@ class CumputeTALibIndicators:
         ind_df = pd.concat([df.copy(deep=True).drop(columns=drop_columns), pd.DataFrame.from_dict(ind_dict)], axis=1)
         if dropNaNs:
             ind_df.dropna(inplace=True)
-        return ind_df
+        return ind_df[sorted(ind_df.columns)]

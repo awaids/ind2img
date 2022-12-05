@@ -3,15 +3,16 @@ import numpy as np
 import pandas as pd
 from pathlib import Path
 from typing import Dict, List, Tuple
-from talib import abstract, MACD
+from talib import abstract, MACD, __version__
 from talib_indicators import Talib_func, CumputeTALibIndicators, get_valid_talib_functions
 
-_BTC_CSV = Path(__file__).parent / 'BTC-USD_1d_yahoo.csv'
-
-def read_csv(csv:Path) -> pd.DataFrame:
-    return pd.read_csv(csv)
 
 class TestTalibfunc:
+    def test_talib_version(self):
+        # All the tests are valid for the version of talib!
+        # Change in version will break most of the test that depend on the get_valid_talib_functions
+        assert(__version__ == '0.4.24'), "Talib version not the same!"
+
     def test_basic_working(self):
         # Test if Talib_func is callable with Dataframes
         inputs = {
@@ -38,7 +39,7 @@ class TestTalibfunc:
 
     def test_multiple_outputs(self):
         # Need to capitalize the column names as this is what we normally get
-        df = read_csv(_BTC_CSV)
+        df = pd.read_csv(Path(__file__).parent / 'BTC-USD_1d_yahoo.csv')
         ref = MACD(df['Close'].to_numpy())
         macd = Talib_func('macd')
         result = macd(df=df)
@@ -62,25 +63,29 @@ class TestTalibfunc:
 def test_get_valid_talib_functions():
     """ Test is the functions found are the one we are currently adding """
     valid_functions = set(get_valid_talib_functions())
+    assert(len(valid_functions) == 150), "The number of expected indicators has changed!"
     assert(valid_functions == set([
-        'HT_DCPERIOD', 'HT_DCPHASE', 'HT_PHASOR', 'HT_SINE', 'HT_TRENDMODE', 'ADD', 'DIV',
-        'MAX', 'MAXINDEX', 'MIN', 'MININDEX', 'MINMAX', 'MINMAXINDEX', 'MULT', 'SUB', 'SUM',
-        'ATAN', 'CEIL', 'COS', 'COSH', 'EXP', 'FLOOR', 'LN', 'LOG10', 'SIN', 'SINH', 'SQRT',
-        'TAN', 'TANH', 'ADX', 'ADXR', 'APO', 'AROON', 'AROONOSC', 'BOP', 'CCI', 'CMO', 'DX',
-        'MACD', 'MACDEXT', 'MACDFIX', 'MFI', 'MINUS_DI', 'MINUS_DM', 'MOM', 'PLUS_DI', 'PLUS_DM',
-        'PPO', 'ROC', 'ROCP', 'ROCR', 'ROCR100', 'RSI', 'STOCH', 'STOCHF', 'STOCHRSI', 'TRIX',
-        'ULTOSC', 'WILLR', 'BBANDS', 'DEMA', 'EMA', 'KAMA', 'MA', 'MAMA', 'MIDPOINT', 'MIDPRICE',
-        'SAR', 'SAREXT', 'SMA', 'TEMA', 'TRIMA', 'WMA', 'CDL2CROWS', 'CDL3BLACKCROWS', 'CDL3INSIDE',
-        'CDL3LINESTRIKE', 'CDL3OUTSIDE', 'CDL3STARSINSOUTH', 'CDL3WHITESOLDIERS', 'CDLABANDONEDBABY',
-        'CDLADVANCEBLOCK', 'CDLBELTHOLD', 'CDLBREAKAWAY', 'CDLCLOSINGMARUBOZU', 'CDLCONCEALBABYSWALL',
-        'CDLCOUNTERATTACK', 'CDLDARKCLOUDCOVER', 'CDLDOJI', 'CDLDOJISTAR', 'CDLDRAGONFLYDOJI',
-        'CDLENGULFING', 'CDLEVENINGDOJISTAR', 'CDLEVENINGSTAR', 'CDLGAPSIDESIDEWHITE', 'CDLGRAVESTONEDOJI',
-        'CDLHAMMER', 'CDLHANGINGMAN', 'CDLHARAMI', 'CDLHARAMICROSS', 'CDLHIGHWAVE', 'CDLHIKKAKE',
-        'CDLHIKKAKEMOD', 'CDLHOMINGPIGEON', 'CDLIDENTICAL3CROWS', 'CDLINNECK', 'CDLINVERTEDHAMMER',
-        'CDLKICKING', 'CDLKICKINGBYLENGTH', 'CDLLADDERBOTTOM', 'CDLLONGLEGGEDDOJI', 'CDLLONGLINE',
-        'CDLMARUBOZU', 'CDLMATCHINGLOW', 'CDLMATHOLD', 'CDLMORNINGDOJISTAR', 'CDLMORNINGSTAR', 'CDLONNECK',
-        'CDLPIERCING', 'CDLRICKSHAWMAN', 'CDLRISEFALL3METHODS', 'CDLSEPARATINGLINES', 'CDLSHOOTINGSTAR',
-        'CDLSHORTLINE', 'CDLSPINNINGTOP', 'CDLSTALLEDPATTERN', 'CDLSTICKSANDWICH', 'CDLTAKURI', 'CDLTASUKIGAP',
+        'HT_DCPERIOD', 'HT_DCPHASE', 'HT_PHASOR', 'HT_SINE', 'HT_TRENDMODE',
+        'ADD', 'DIV', 'MAX', 'MAXINDEX', 'MIN', 'MININDEX', 'MINMAX', 'MINMAXINDEX',
+        'MULT', 'SUB', 'SUM', 'ATAN', 'CEIL', 'COS', 'FLOOR', 'LN', 'LOG10', 'SIN',
+        'SQRT', 'TAN', 'TANH', 'ADX', 'ADXR', 'APO', 'AROON', 'AROONOSC', 'BOP',
+        'CCI', 'CMO', 'DX', 'MACD', 'MACDEXT', 'MACDFIX', 'MFI', 'MINUS_DI', 'MINUS_DM',
+        'MOM', 'PLUS_DI', 'PLUS_DM', 'PPO', 'ROC', 'ROCP', 'ROCR', 'ROCR100', 'RSI',
+        'STOCH', 'STOCHF', 'STOCHRSI', 'TRIX', 'ULTOSC', 'WILLR', 'BBANDS', 'DEMA',
+        'EMA', 'KAMA', 'MA', 'MAMA', 'MIDPOINT', 'MIDPRICE', 'SAR', 'SAREXT', 'SMA',
+        'TEMA', 'TRIMA', 'WMA', 'CDL2CROWS', 'CDL3BLACKCROWS', 'CDL3INSIDE', 
+        'CDL3LINESTRIKE', 'CDL3OUTSIDE', 'CDL3STARSINSOUTH', 'CDL3WHITESOLDIERS',
+        'CDLABANDONEDBABY', 'CDLADVANCEBLOCK', 'CDLBELTHOLD', 'CDLBREAKAWAY',
+        'CDLCLOSINGMARUBOZU', 'CDLCONCEALBABYSWALL', 'CDLCOUNTERATTACK', 'CDLDARKCLOUDCOVER',
+        'CDLDOJI', 'CDLDOJISTAR', 'CDLDRAGONFLYDOJI', 'CDLENGULFING', 'CDLEVENINGDOJISTAR',
+        'CDLEVENINGSTAR', 'CDLGAPSIDESIDEWHITE', 'CDLGRAVESTONEDOJI', 'CDLHAMMER',
+        'CDLHANGINGMAN', 'CDLHARAMI', 'CDLHARAMICROSS', 'CDLHIGHWAVE', 
+        'CDLHIKKAKE', 'CDLHIKKAKEMOD', 'CDLHOMINGPIGEON', 'CDLIDENTICAL3CROWS', 'CDLINNECK',
+        'CDLINVERTEDHAMMER', 'CDLKICKING', 'CDLKICKINGBYLENGTH', 'CDLLADDERBOTTOM',
+        'CDLLONGLEGGEDDOJI', 'CDLLONGLINE', 'CDLMARUBOZU', 'CDLMATCHINGLOW', 'CDLMATHOLD',
+        'CDLMORNINGDOJISTAR', 'CDLMORNINGSTAR', 'CDLONNECK', 'CDLPIERCING', 'CDLRICKSHAWMAN',
+        'CDLRISEFALL3METHODS', 'CDLSEPARATINGLINES', 'CDLSHOOTINGSTAR', 'CDLSHORTLINE',
+        'CDLSPINNINGTOP', 'CDLSTALLEDPATTERN', 'CDLSTICKSANDWICH', 'CDLTAKURI', 'CDLTASUKIGAP',
         'CDLTHRUSTING', 'CDLTRISTAR', 'CDLUNIQUE3RIVER', 'CDLUPSIDEGAP2CROWS', 'CDLXSIDEGAP3METHODS',
         'AVGPRICE', 'MEDPRICE', 'TYPPRICE', 'WCLPRICE', 'BETA', 'CORREL', 'LINEARREG', 'LINEARREG_ANGLE',
         'LINEARREG_INTERCEPT', 'LINEARREG_SLOPE', 'STDDEV', 'TSF', 'VAR', 'ATR', 'NATR', 'TRANGE', 'AD',
@@ -125,9 +130,16 @@ class TestCumputeTALibIndicators:
 
     def test_get_columns_list(self):
         """ Check the working of get_columns_list """
-        assert(len(CumputeTALibIndicators(timeperiods=[10]).get_columns_list()) == 170), "Number of columns to be added not the same"
-        assert(len(CumputeTALibIndicators(timeperiods=[10, 20]).get_columns_list()) == 170 + 56), "Number of columns to be added not the same"
-        assert(len(CumputeTALibIndicators(timeperiods=[10, 20, 30]).get_columns_list()) == 170 + 56*2), "Number of columns to be added not the same"
+        num_cols = 167
+        assert(len(CumputeTALibIndicators(timeperiods=[10]).get_columns_list()) == num_cols), "Number of columns to be added not the same"
+        assert(len(CumputeTALibIndicators(timeperiods=[10, 20]).get_columns_list()) == num_cols + 56), "Number of columns to be added not the same"
+        assert(len(CumputeTALibIndicators(timeperiods=[10, 20, 30]).get_columns_list()) == num_cols + 56*2), "Number of columns to be added not the same"
+
+    def test_check_col_order(self):
+        """ Check if the columns are always sorted """
+        df = pd.read_csv(Path(__file__).parent / 'BTC-USD_1d_yahoo.csv')
+        columns = list(CumputeTALibIndicators(timeperiods=[10]).get_indicators_df(df).columns)
+        assert(columns == sorted(columns)), "Returned columns order is not sorted"
 
     def test_original_df_notchanged(self):
         """ Test if the orignal does not change """
@@ -148,7 +160,7 @@ class TestCumputeTALibIndicators:
         # Assert all required ind columns are there
         assert(set(ind_df.columns).difference(set(indA.get_columns_list())) == {'High', 'Volume', 'Low', 'Close', 'Open'}), "Required indicator columns are not properly added"
         # Check if the number of row 
-        assert(len(ind_df.columns) == 175), "Unexpected number of columns"
+        assert(len(ind_df.columns) == 172), "Unexpected number of columns"
     
     def test_all_data_present(self):
         """ Make sure the right no. of rows are present after computing indicators """
