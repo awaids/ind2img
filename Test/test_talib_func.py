@@ -167,7 +167,6 @@ class TestCumputeTALibIndicators:
         df = pd.read_csv(Path(__file__).parent / 'BTC-USD_1d_yahoo.csv')
         indA =  CumputeTALibIndicators(timeperiods=[10, 100])
         ind_df = indA.get_indicators_df(df)
-
         assert(ind_df.shape[0] == df.shape[0] - indA.minimum_period_required + 1), "There are rows missing!"
     
 

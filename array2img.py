@@ -67,24 +67,6 @@ class df2array:
         arr = df2array.normalize(df).to_numpy().astype(np.uint8)
         return df2array.squareify(df2array.add_pad(arr, pad=df2array.required_zero(arr)))
 
-class array2img:
-    #TODO: Not required anymore!
-    def __init__(self, data:np.ndarray) -> None:
-        # Manage 2D arrays with capabilities to display
-        assert(len(data.shape) == 2), "data shape must be 2D"
-        self.data = data
-    
-    @cache
-    def _get_Image(self) -> Image:
-        return Image.fromarray(self.data, mode = 'L')
-
-    def draw(self) -> None:
-        self._get_Image().show()
-
-    def save(self, png:Path) -> None:
-        self._get_Image().save(png)
-
-
 class Df2BW:
     """ Class to convert df to BW images """
     @staticmethod
