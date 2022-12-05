@@ -26,6 +26,22 @@ class Df2ImageNormalizer:
         """ Normalize the df column wise to for images """
         return pd.DataFrame(Df2ImageNormalizer.scaler.fit_transform(df[df.columns]), columns=df.columns).astype(int)
 
+class Df2ImageBatchNormalizer:
+    """ This normalizer normalizes for images but does batch normalization """
+    def __init__(self, batch:int = 10) -> None:
+        assert(batch >= 3), "batch must be >=3 else you will get binary values"
+        self.batch = batch
+        self.scaler = MinMaxScaler(feature_range=(0, 255)) 
+    
+    def normalize(self, df: pd.DataFrame) -> np.ndarray:
+        """ Normalizes the df based on the batch size """
+        n_rows = df.shape[0]
+        assert(n_rows >= self.batch), "Cannot batch-normalize, not enough rows in df"
+        # Normaliztation technique: Normalize a sliced df, and then pick the last entry!
+        new_arr = [self.scaler.fit_transform(df[df.columns].iloc[i:self.batch + i])[-1] for i in range(n_rows - self.batch + 1)]
+        return np.array(new_arr).astype(np.uint8)
+
+
 class df2array:
     """ Class to covert df into an ndarray where all rows are converted to 2D square array with paddings if required
         The output from this class can be directly used to covert to images """

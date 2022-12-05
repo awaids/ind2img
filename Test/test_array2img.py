@@ -1,8 +1,47 @@
 import pytest
 import numpy as np
 import pandas as pd
-from pathlib import Path
 from array2img import *
+
+class TestDf2ImageBatchNormalizer:
+    def test_batch_nomalization(self):
+        df = pd.DataFrame({
+            'A':[0, 63, 127, 255, 191, 2],
+            'B':[63, 0, 127, 191, 255, 2],
+            'C':[0, 85, 170, 255, 0, 2]})
+        batch = 3
+        ref_arr = np.array(
+            [
+                [255, 255, 255],
+                [255, 254, 255],
+                [127, 255, 0],
+                [0, 0, 2]
+            ], 
+            dtype=np.uint8
+        )
+        new_arr = Df2ImageBatchNormalizer(batch=batch).normalize(df)
+        assert(np.array_equal(new_arr, ref_arr)), "Not matching ref"
+
+    def test_batch_nomalization_asserts(self):
+        with pytest.raises(AssertionError):
+            Df2ImageBatchNormalizer(batch=1)
+        
+        with pytest.raises(AssertionError):
+            # This assertion should fail as df not big enough
+            df = pd.DataFrame({
+            'A':[0, 63, 127, 255, 191, 2],
+            'B':[63, 0, 127, 191, 255, 2],
+            'C':[0, 85, 170, 255, 0, 2]})
+            Df2ImageBatchNormalizer(batch=7).normalize(df)
+
+        # This should pass
+        df = pd.DataFrame({
+            'A':[0, 63, 127],
+            'B':[63, 0, 127],
+            'C':[0, 85, 170]})
+        arr = Df2ImageBatchNormalizer(batch=3).normalize(df)
+        assert(arr.shape[0] == 1), "Incorrect number of rows found"
+
 
 class Testdf2array:
     def test_normalizer(self):
