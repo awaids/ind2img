@@ -125,8 +125,18 @@ class Testdf2array:
         
         assert(arr.shape == (1, 2, 2)), "Shape incorect"
         assert(np.array_equal(arr[0], np.array([[255, 0],[255, 0]]))), "Row not equal"
+    
+    def test_dtype_asserts(self):
+        # Test if there is a dtype that is not supported in the df
+        df = pd.read_csv(Path(__file__).parent / "short_df.csv")
+        with pytest.raises(AssertionError):
+            convert_to_images(df, rgb=False)
+        # This should pass
+        convert_to_images(df.drop(columns=['Date']), rgb=False)
+
 
 def test_Df2BW_working():
+    # Test the main working of the module
     df = pd.DataFrame({
         'A':[10.0, 20.0, 30.0, 50.0, 40.0],
         'B':[-1,-2,0,1,2],

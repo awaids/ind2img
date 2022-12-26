@@ -70,9 +70,18 @@ def _convert_to_RGB(df:pd.DataFrame) -> List[Image.Image]:
     # To get rgb immages, we stack the 3 images in sequence on on another
     return [Image.fromarray(np.dstack((arrs[idx], arrs[idx-1], arrs[idx-2])), mode = 'RGB') for idx in range(2,arrs.shape[0])]
 
+
+
 # Helper functions
 def convert_to_images(df:pd.DataFrame, rgb=False) -> List[Image.Image]:
     # Fucntion to convert df to images
+    def ensure_dtypes_ok(df: pd.DataFrame) -> bool:
+        # Function to ensure that the dtypes of the cols is either float or intetger
+        for dtype in df.dtypes:
+            if not (np.issubdtype(dtype, np.floating) or np.issubdtype(dtype, np.integer)):
+                return False    
+        return True
+    assert ensure_dtypes_ok(df) , "dtypes for the df are invalid" 
     return _convert_to_RGB(df) if rgb else _convert_to_BW(df)
 
 def images_to_gif(images:List[Image.Image], gif:Path) -> None:
