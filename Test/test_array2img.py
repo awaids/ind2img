@@ -127,7 +127,7 @@ class Testdf2array:
         assert(np.array_equal(arr[0], np.array([[255, 0],[255, 0]]))), "Row not equal"
     
     def test_dtype_asserts(self):
-        # Test if there is a dtype that is not supported in the df
+        # Test if there is a dtype that is not supported in the df asserted out
         df = pd.read_csv(Path(__file__).parent / "short_df.csv")
         with pytest.raises(AssertionError):
             convert_to_images(df, rgb=False)
@@ -146,5 +146,6 @@ def test_Df2BW_working():
     # -2 here as the Df2ImageBatchNormalizer has a batch 3
     assert(len(images) == df.shape[0] - 2), "Incorrect number of images recieved"
 
+    # Check the sizes of all images
     for image in images:
         assert(image.size == (2, 2)), "Incorrect image size"
