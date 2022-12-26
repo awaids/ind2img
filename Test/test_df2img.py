@@ -1,44 +1,63 @@
-import numpy as np
 import pandas as pd
+import numpy as np
 from PIL import Image
+from array2img import convert_to_images
+from array2img import images_to_gif
+from array2img import images_to_dir
 from pathlib import Path
-from array2img import img2gif, img2dir
-from array2img import Df2BW, Df2RGB
-from talib_indicators import CumputeTALibIndicators
 
+_ref_dir = Path(__file__).parent / 'ref'
 
-def test_df2BWimages():
-    ref_dim = (17, 17)
-    ref_imgs = 2653
-
-    curr_dir = Path(__file__).parent
-    df = pd.read_csv(curr_dir / 'BTC-USD_1d_yahoo.csv')
-    ind_df = CumputeTALibIndicators(timeperiods=[10,50,100]).get_indicators_df(df)
+def test_convert_images():
+    # Read the input
+    ref_dim = (3, 3)
+    df = pd.read_csv(_ref_dir / 'ref_image_df.csv')
+    df_rows = df.shape[0]
 
     # Checking the bw images
-    images_bw = Df2BW.convert(ind_df)
-    assert(images_bw[0].size == ref_dim), "Image dimensions not correct for the given timeperiods"
-    assert(len(images_bw) == ref_imgs), "No. of images are incorrect"
-    # images_bw[0].save(curr_dir / 'test_bw.png') # Update the reference
-    arr = np.asarray(images_bw[0])
-    ref_arr = np.asarray(Image.open(curr_dir / 'test_bw.png'))
-    assert(np.array_equal(arr, ref_arr)), "The arrays generated are not same as the reference"
-
-    # Checking the bw images
-    images_rgb = Df2RGB.convert(ind_df)
-    assert(images_rgb[0].size == ref_dim), "Image dimensions not correct for the given timeperiods"
-    assert(len(images_rgb) == ref_imgs - 2), "No. of images are incorrect"
-    # images_rgb[0].save(curr_dir / 'test_rgb.png') # Update the reference
-    arr = np.asarray(images_rgb[0])
-    ref_arr = np.asarray(Image.open(curr_dir / 'test_rgb.png'))
-    assert(np.array_equal(arr, ref_arr)), "The arrays generated are not same as the reference"
+    images = convert_to_images(df, rgb=False)
+    assert len(images) ==  df_rows - 2 , "Images sizes incorrect"
+    assert images[0].size == ref_dim , "Image dimensions not correct"
     
-    
-def test_main_working():
-    curr_dir = Path(__file__).parent
-    df = pd.read_csv(curr_dir / 'BTC-USD_1d_yahoo.csv')
-    ind_df = CumputeTALibIndicators(timeperiods=list(range(2,300))).get_indicators_df(df)
+    # Enable to update reference
+    # images[0].save(_ref_dir / f'bw_ref_0.png')
+    im = Image.open(_ref_dir / f'bw_ref_0.png') 
+    assert np.array_equal(np.asarray(im), np.asarray(images[0])), "Reference not the same"
 
-    img2gif(Df2RGB.convert(ind_df), curr_dir / 'rgb.gif')
-    img2gif(Df2BW.convert(ind_df), curr_dir / 'bw.gif')
-    print("Done!")
+    # Checking the rgb images
+    images = convert_to_images(df, rgb=True)
+    assert len(images) ==  df_rows - 4 , "Images sizes incorrect"
+    assert images[0].size == ref_dim , "Image dimensions not correct"
+    
+    # Enable to update reference
+    # images[0].save(_ref_dir / f'rgb_ref_0.png')
+    im = Image.open(_ref_dir / f'rgb_ref_0.png') 
+    assert np.array_equal(np.asarray(im), np.asarray(images[0])), "Reference not the same"
+
+def test_images_to_gif():
+    # # Test if the images are properly covnerted to gif
+    images = [Image.open(_ref_dir / path) for path in ['bw_ref_0.png', 'rgb_ref_0.png']]
+    gif_path = Path(_ref_dir / 'tmp.gif')
+    images_to_gif(images=images, gif=gif_path)
+    assert gif_path.exists() , "Gif not created"
+    
+    # Test the gif
+    gif = Image.open(gif_path)
+    assert gif.n_frames == 2, "Gif does not have correct number of frames"
+
+    # Cleanup
+    gif.close()
+    gif_path.unlink()
+
+def test_images_to_dir():
+    # Test if the image dump is proper
+    save_dir = Path(__file__).parent / 'tmp_dir'
+    images = [Image.open(_ref_dir / path) for path in ['bw_ref_0.png', 'rgb_ref_0.png']]
+    images_to_dir(images, save_dir)
+    assert save_dir.exists(), "save_dir not created"
+    assert len(list(save_dir.iterdir())) == len(images), "Expected number of images not found"
+
+    # clean up
+    for file in save_dir.iterdir():
+        file.unlink()
+    save_dir.rmdir()

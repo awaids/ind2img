@@ -42,22 +42,7 @@ class TestDf2ImageBatchNormalizer:
         arr = Df2ImageBatchNormalizer(batch=3).normalize(df)
         assert(arr.shape[0] == 1), "Incorrect number of rows found"
 
-
 class Testdf2array:
-    def test_normalizer(self):
-        norm_df = Df2ImageNormalizer.normalize(
-            df = pd.DataFrame({
-            'A':[10.0, 20.0, 30.0, 50.0, 40.0],
-            'B':[-1,-2,0,1,2],
-            'C':[1,2,3,4,1]
-            })
-        )
-        ref_df = pd.DataFrame({
-            'A':[0, 63, 127, 255, 191],
-            'B':[63, 0, 127, 191, 255],
-            'C':[0, 85, 170, 255, 0]}, dtype=int)
-        assert(norm_df.equals(ref_df)), "Normalized df not same as reference"
-
     def test_required_zero(self):
         assert(df2array.required_zero(np.array([[1]])) == 0), "Required zeros must 0"
         assert(df2array.required_zero(np.array([[1,2,3], [4,5,6]])) == 1), "Required zeros must 1"
@@ -131,28 +116,25 @@ class Testdf2array:
         assert(np.array_equal(new_arr[1], np.array([[20, -2], [2, 0]])))
         assert(np.array_equal(new_arr[2].astype(str), np.array([['a', 'b'], ['c', 0]]).astype(str)))
 
-    def test_main_working(self):
+    def test_batch_working(self):
         df = pd.DataFrame({
             'A':[10, 20, 30],
             'B':[-1, -2, -3],
             'C':[1.5, 2.5, 3.5]}).astype(float)
         arr = df2array.convert(df)
         
-        assert(arr.shape == (3, 2, 2)), "Shape incorect"
-        assert(np.array_equal(arr[0], np.array([[0, 255],[0, 0]]))), "Row not equal"
-        assert(np.array_equal(arr[1], np.array([[127, 127],[127, 0]]))), "Row not equal"
-        assert(np.array_equal(arr[2], np.array([[255, 0],[255, 0]]))), "Row not equal"
+        assert(arr.shape == (1, 2, 2)), "Shape incorect"
+        assert(np.array_equal(arr[0], np.array([[255, 0],[255, 0]]))), "Row not equal"
 
-class TestDf2BW:
-    def test_main_working(self):
-        # Nothing should fail here
-        df = pd.DataFrame({
-           'A':[10.0, 20.0, 30.0, 50.0, 40.0],
-           'B':[-1,-2,0,1,2],
-           'C':[1,2,3,4,1]
-        })
-        images = Df2BW.convert(df)
-        assert(len(images) == df.shape[0]), "Incorrect number of images recieved"
+def test_Df2BW_working():
+    df = pd.DataFrame({
+        'A':[10.0, 20.0, 30.0, 50.0, 40.0],
+        'B':[-1,-2,0,1,2],
+        'C':[1,2,3,4,1]
+    })
+    images = convert_to_images(df, rgb=False)
+    # -2 here as the Df2ImageBatchNormalizer has a batch 3
+    assert(len(images) == df.shape[0] - 2), "Incorrect number of images recieved"
 
-        for image in images:
-            assert(image.size == (2, 2)), "Incorrect image size"
+    for image in images:
+        assert(image.size == (2, 2)), "Incorrect image size"

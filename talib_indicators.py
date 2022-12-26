@@ -26,7 +26,6 @@ def get_valid_talib_functions() -> List[str]:
             valid_funcs.append(func)
     return valid_funcs
 
-
 class Talib_func:
     """ Class to maintian the abstract api for talib  """
     def __init__(self, ind_name:str) -> None:
