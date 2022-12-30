@@ -89,8 +89,8 @@ def images_to_gif(images:List[Image.Image], gif:Path) -> None:
     assert(len(images) > 1), "More images required to make gif"
     images[0].save(gif, save_all=True, append_images=[img for img in images[1:]])
 
-def images_to_dir(images: List[Image.Image], save_dir:Path) -> None:
+def images_to_dir(images: List[Image.Image], save_dir:Path, prefix:str="") -> None:
     # Saves all images to provided dir
     save_dir.unlink() if save_dir.exists() else save_dir.mkdir()
     for idx, image in enumerate(images):
-        image.save(save_dir/f'{idx}.png')
+        image.save(save_dir/f'{prefix}{idx}.png')

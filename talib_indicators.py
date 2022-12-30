@@ -27,7 +27,7 @@ def get_valid_talib_functions() -> List[str]:
     return valid_funcs
 
 class Talib_func:
-    """ Class to maintian the abstract api for talib  """
+    """ Wrapper Class to maintian the abstract api for talib  """
     def __init__(self, ind_name:str) -> None:
         self.func = abstract.Function(ind_name)
         self.info = self.func.info
